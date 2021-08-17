@@ -13,7 +13,7 @@ import (
 
 // HandleInlineQuery handles an inline query.
 func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
-	results := make(tb.Results, 3)
+	results := make(tb.Results, 4)
 
 	results[0] = &tb.ArticleResult{
 		Title:       "🌌 I need some space!",
@@ -33,9 +33,16 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 		Text:        generateMe(q.From, q.Text),
 	}
 
+	results[3] = &tb.ArticleResult{
+		Title:       "🔂 Can you repeat what I just said?",
+		Description: "Repeat the message three times.",
+		Text:        repeat(q.Text),
+	}
+
 	results[0].SetResultID("addSpaces")
 	results[1].SetResultID("createTypos")
 	results[2].SetResultID("generateMe")
+	results[3].SetResultID("repeat")
 
 	err := b.Answer(q, &tb.QueryResponse{
 		Results: results,
@@ -102,4 +109,13 @@ func generateMe(from tb.User, s string) string {
 	}
 
 	return fmt.Sprintf("* %s %s", from.FirstName, s)
+}
+
+// repeat repeats the message three times.
+func repeat(s string) string {
+	if s == "" {
+		s = "I repeat!"
+	}
+
+	return fmt.Sprintf("%s\n%s\n%s", s, s, s)
 }

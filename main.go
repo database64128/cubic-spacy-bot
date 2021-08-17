@@ -37,7 +37,6 @@ func main() {
 
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 
 	log.Printf("Started Telegram bot: @%s (%d)", b.Me.Username, b.Me.ID)
