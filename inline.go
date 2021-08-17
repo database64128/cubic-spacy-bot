@@ -13,23 +13,23 @@ import (
 
 // HandleInlineQuery handles an inline query.
 func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
-	results := make(tb.Results, 4)
+	results := make(tb.Results, 7)
 
 	results[0] = &tb.ArticleResult{
 		Title:       "🌌 I need some space!",
-		Description: "Add extra spaces between charaters in the message.",
+		Description: "Add extra spaces between each charater in the message.",
 		Text:        addSpaces(q.Text),
 	}
 
 	results[1] = &tb.ArticleResult{
 		Title:       "✏️ feat: add typo",
-		Description: "Randomly alter the order of charaters in the message.",
+		Description: "Randomly change the order of charaters in the message.",
 		Text:        createTypos(q.Text),
 	}
 
 	results[2] = &tb.ArticleResult{
 		Title:       "🤳 What the hell am I doing?",
-		Description: "Tell everyone what you're doing.",
+		Description: "Tell everyone what you're doing (/me).",
 		Text:        generateMe(q.From, q.Text),
 	}
 
@@ -39,10 +39,31 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 		Text:        repeat(q.Text),
 	}
 
+	results[4] = &tb.ArticleResult{
+		Title:       "🦘 Jumpy Letters",
+		Description: "Randomly change letter case in the message.",
+		Text:        randomizeCase(q.Text),
+	}
+
+	results[5] = &tb.ArticleResult{
+		Title:       "🛠️ Combo: Spaces + Repeat",
+		Description: "Add extra spaces between each charater. Then repeat the message three times.",
+		Text:        repeat(addSpaces(q.Text)),
+	}
+
+	results[6] = &tb.ArticleResult{
+		Title:       "🛠️ Combo: Random Case + Spaces",
+		Description: "Randomly change letter case. Then add extra spaces between each charater.",
+		Text:        addSpaces(randomizeCase(q.Text)),
+	}
+
 	results[0].SetResultID("addSpaces")
 	results[1].SetResultID("createTypos")
 	results[2].SetResultID("generateMe")
 	results[3].SetResultID("repeat")
+	results[4].SetResultID("randomizeCase")
+	results[5].SetResultID("comboSpacesRepeat")
+	results[6].SetResultID("comboRandomcaseSpaces")
 
 	err := b.Answer(q, &tb.QueryResponse{
 		Results: results,
@@ -78,7 +99,7 @@ func addSpaces(s string) string {
 	return strings.TrimSpace(sb.String())
 }
 
-// createTypos creates typos in the input message by randomly altering the order of charaters.
+// createTypos creates typos in the input message by randomly changing the order of charaters.
 func createTypos(s string) string {
 	if s == "" {
 		s = "✏️ feat: add typo"
@@ -118,4 +139,35 @@ func repeat(s string) string {
 	}
 
 	return fmt.Sprintf("%s\n%s\n%s", s, s, s)
+}
+
+// randomizeCase randomizes letter case in the message by randomly use .ToLower or .ToUpper on letters.
+func randomizeCase(s string) string {
+	if s == "" {
+		s = "The quick brown fox jumps over the lazy dog."
+	}
+
+	runes := []rune(s)
+
+	for i := range runes {
+		isLower := 'a' <= runes[i] && runes[i] <= 'z'
+		isUpper := 'A' <= runes[i] && runes[i] <= 'Z'
+
+		if !isLower && !isUpper {
+			continue
+		}
+
+		switch rand.Intn(2) {
+		case 0: // ToUpper
+			if isLower {
+				runes[i] -= 'a' - 'A'
+			}
+		case 1: // ToLower
+			if isUpper {
+				runes[i] += 'a' - 'A'
+			}
+		}
+	}
+
+	return string(runes)
 }
