@@ -27,8 +27,7 @@ jobs:
           env CGO_ENABLED=0 go build -v -trimpath -ldflags '-s -w -buildid=' -o package-linux-amd64/
           env CGO_ENABLED=0 GOARCH=arm64 go build -v -trimpath -ldflags '-s -w -buildid=' -o package-linux-arm64/
           env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -v -trimpath -ldflags '-s -w -buildid=' -o package-windows-amd64/
-          # Uncomment when go1.17 is available.
-          #env CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -v -trimpath -ldflags '-s -w -buildid=' -o package-windows-arm64/
+          env CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -v -trimpath -ldflags '-s -w -buildid=' -o package-windows-arm64/
 
       - name: Get version
         id: get_version
@@ -50,9 +49,8 @@ jobs:
           tar -acf ../cubic-spacy-bot-${{ steps.get_version.outputs.VERSION }}-linux-arm64.tar.zst .
           cd ../package-windows-amd64/
           tar -acf ../cubic-spacy-bot-${{ steps.get_version.outputs.VERSION }}-windows-amd64.tar.zst .
-          # Uncomment when go1.17 is available.
-          #cd ../package-windows-arm64/
-          #tar -acf ../cubic-spacy-bot-${{ steps.get_version.outputs.VERSION }}-windows-arm64.tar.zst .
+          cd ../package-windows-arm64/
+          tar -acf ../cubic-spacy-bot-${{ steps.get_version.outputs.VERSION }}-windows-arm64.tar.zst .
 
       - name: Upload release assets
         uses: svenstaro/upload-release-action@v2
