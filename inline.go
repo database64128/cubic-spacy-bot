@@ -84,8 +84,6 @@ func addSpaces(s string) string {
 
 	for _, r := range s {
 		switch {
-		case r == ' ':
-			sb.WriteRune(r)
 		case r > unicode.MaxASCII:
 			sb.WriteByte(' ')
 			sb.WriteRune(r)
