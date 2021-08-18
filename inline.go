@@ -17,13 +17,13 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 
 	results[0] = &tb.ArticleResult{
 		Title:       "🌌 I need some space!",
-		Description: "Add extra spaces between each charater in the message.",
+		Description: "Add extra spaces between each character in the message.",
 		Text:        addSpaces(q.Text),
 	}
 
 	results[1] = &tb.ArticleResult{
 		Title:       "✏️ feat: add typo",
-		Description: "Randomly change the order of charaters in the message.",
+		Description: "Randomly change the order of characters in the message.",
 		Text:        createTypos(q.Text),
 	}
 
@@ -47,13 +47,13 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 
 	results[5] = &tb.ArticleResult{
 		Title:       "🛠️ Combo: Spaces + Repeat",
-		Description: "Add extra spaces between each charater. Then repeat the message three times.",
+		Description: "Add extra spaces between each character. Then repeat the message three times.",
 		Text:        repeat(addSpaces(q.Text)),
 	}
 
 	results[6] = &tb.ArticleResult{
 		Title:       "🛠️ Combo: Random Case + Spaces",
-		Description: "Randomly change letter case. Then add extra spaces between each charater.",
+		Description: "Randomly change letter case. Then add extra spaces between each character.",
 		Text:        addSpaces(randomizeCase(q.Text)),
 	}
 
@@ -74,7 +74,7 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 	}
 }
 
-// addSpaces adds one space between ASCII charaters, two spaces between non-ASCII charaters.
+// addSpaces adds one space between ASCII characters, two spaces between non-ASCII characters.
 func addSpaces(s string) string {
 	if s == "" {
 		s = "🌌 I need some space!"
@@ -97,7 +97,7 @@ func addSpaces(s string) string {
 	return strings.TrimSpace(sb.String())
 }
 
-// createTypos creates typos in the input message by randomly changing the order of charaters.
+// createTypos creates typos in the input message by randomly changing the order of characters.
 func createTypos(s string) string {
 	if s == "" {
 		s = "✏️ feat: add typo"
