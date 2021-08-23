@@ -66,7 +66,8 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 	results[6].SetResultID("comboRandomcaseSpaces")
 
 	err := b.Answer(q, &tb.QueryResponse{
-		Results: results,
+		Results:   results,
+		CacheTime: 1,
 	})
 
 	if err != nil {
