@@ -13,7 +13,7 @@ import (
 
 // HandleInlineQuery handles an inline query.
 func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
-	results := make(tb.Results, 7)
+	results := make(tb.Results, 8)
 
 	results[0] = &tb.ArticleResult{
 		Title:       "🌌 I need some space!",
@@ -22,48 +22,55 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 	}
 
 	results[1] = &tb.ArticleResult{
-		Title:       "✏️ feat: add typo",
-		Description: "Randomly change the order of characters in the message.",
-		Text:        createTypos(q.Text),
-	}
-
-	results[2] = &tb.ArticleResult{
-		Title:       "🤳 What the hell am I doing?",
-		Description: "Tell everyone what you're doing (/me).",
-		Text:        generateMe(q.From, q.Text),
-	}
-
-	results[3] = &tb.ArticleResult{
-		Title:       "🔂 Can you repeat what I just said?",
-		Description: "Repeat the message three times.",
-		Text:        repeat(q.Text),
-	}
-
-	results[4] = &tb.ArticleResult{
 		Title:       "🦘 Jumpy Letters",
 		Description: "Randomly change letter case in the message.",
 		Text:        randomizeCase(q.Text),
 	}
 
+	results[2] = &tb.ArticleResult{
+		Title:       "✏️ feat: add typo",
+		Description: "Randomly change the order of characters in the message.",
+		Text:        createTypos(q.Text),
+	}
+
+	results[3] = &tb.ArticleResult{
+		Title:       "✍️ Scramble Letters",
+		Description: "Recursively add typos.",
+		Text:        scrambleLetters(q.Text),
+	}
+
+	results[4] = &tb.ArticleResult{
+		Title:       "🤳 What the hell am I doing?",
+		Description: "Tell everyone what you're doing (/me).",
+		Text:        generateMe(q.From, q.Text),
+	}
+
 	results[5] = &tb.ArticleResult{
+		Title:       "🔂 Can you repeat what I just said?",
+		Description: "Repeat the message three times.",
+		Text:        repeat(q.Text),
+	}
+
+	results[6] = &tb.ArticleResult{
 		Title:       "🛠️ Combo: Spaces + Repeat",
 		Description: "Add extra spaces between each character. Then repeat the message three times.",
 		Text:        repeat(addSpaces(q.Text)),
 	}
 
-	results[6] = &tb.ArticleResult{
+	results[7] = &tb.ArticleResult{
 		Title:       "🛠️ Combo: Random Case + Spaces",
 		Description: "Randomly change letter case. Then add extra spaces between each character.",
 		Text:        addSpaces(randomizeCase(q.Text)),
 	}
 
 	results[0].SetResultID("addSpaces")
-	results[1].SetResultID("createTypos")
-	results[2].SetResultID("generateMe")
-	results[3].SetResultID("repeat")
-	results[4].SetResultID("randomizeCase")
-	results[5].SetResultID("comboSpacesRepeat")
-	results[6].SetResultID("comboRandomcaseSpaces")
+	results[1].SetResultID("randomizeCase")
+	results[2].SetResultID("createTypos")
+	results[3].SetResultID("scrambleLetters")
+	results[4].SetResultID("generateMe")
+	results[5].SetResultID("repeat")
+	results[6].SetResultID("comboSpacesRepeat")
+	results[7].SetResultID("comboRandomcaseSpaces")
 
 	err := b.Answer(q, &tb.QueryResponse{
 		Results:   results,
@@ -120,6 +127,17 @@ func createTypos(s string) string {
 	}
 
 	return string(runes)
+}
+
+// scrambleLetters recursively calls createTypos to pseudo-shuffle the letters in the string.
+func scrambleLetters(s string) string {
+	times := 10 + rand.Intn(10)
+
+	for i := 0; i < times; i++ {
+		s = createTypos(s)
+	}
+
+	return s
 }
 
 // generateMe generates a '/me' message.
