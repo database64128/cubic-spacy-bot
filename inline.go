@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"reflect"
 	"strings"
 	"unicode"
 
@@ -118,12 +117,11 @@ func createTypos(s string) string {
 	}
 
 	times := 1 + len(runes)/20
-	swapF := reflect.Swapper(runes)
 
 	for i := 0; i < times; i++ {
-		// Swap runes[pos] and runes[pos + 1]
+		// Swap runes[pos] and runes[pos+1]
 		pos := rand.Intn(len(runes) - 1)
-		swapF(pos, pos+1)
+		runes[pos], runes[pos+1] = runes[pos+1], runes[pos]
 	}
 
 	return string(runes)
