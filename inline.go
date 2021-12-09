@@ -29,13 +29,13 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 	results[2] = &tb.ArticleResult{
 		Title:       "✏️ feat: add typo",
 		Description: "Randomly change the order of characters in the message.",
-		Text:        createTypos(q.Text),
+		Text:        createTypos(q.Text, 1),
 	}
 
 	results[3] = &tb.ArticleResult{
 		Title:       "✍️ Scramble Letters",
 		Description: "Recursively add typos.",
-		Text:        scrambleLetters(q.Text),
+		Text:        createTypos(q.Text, 10+rand.Intn(10)),
 	}
 
 	results[4] = &tb.ArticleResult{
@@ -105,7 +105,7 @@ func addSpaces(s string) string {
 }
 
 // createTypos creates typos in the input message by randomly changing the order of characters.
-func createTypos(s string) string {
+func createTypos(s string, rounds int) string {
 	if s == "" {
 		s = "✏️ feat: add typo"
 	}
@@ -116,7 +116,7 @@ func createTypos(s string) string {
 		return s
 	}
 
-	times := 1 + len(runes)/20
+	times := (1 + len(runes)/20) * rounds
 
 	for i := 0; i < times; i++ {
 		// Swap runes[pos] and runes[pos+1]
@@ -125,17 +125,6 @@ func createTypos(s string) string {
 	}
 
 	return string(runes)
-}
-
-// scrambleLetters recursively calls createTypos to pseudo-shuffle the letters in the string.
-func scrambleLetters(s string) string {
-	times := 10 + rand.Intn(10)
-
-	for i := 0; i < times; i++ {
-		s = createTypos(s)
-	}
-
-	return s
 }
 
 // generateMe generates a '/me' message.
