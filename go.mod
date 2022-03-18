@@ -1,7 +1,5 @@
 module github.com/database64128/cubic-spacy-bot
 
-go 1.17
+go 1.18
 
-require gopkg.in/tucnak/telebot.v2 v2.5.0
-
-require github.com/pkg/errors v0.9.1 // indirect
+require gopkg.in/telebot.v3 v3.0.0

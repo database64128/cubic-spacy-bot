@@ -2,64 +2,65 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"strings"
 	"unicode"
 
-	tb "gopkg.in/tucnak/telebot.v2"
+	tele "gopkg.in/telebot.v3"
 )
 
 // HandleInlineQuery handles an inline query.
-func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
-	results := make(tb.Results, 8)
+func HandleInlineQuery(c tele.Context) error {
+	text := c.Text()
+	sender := c.Sender()
+	results := make(tele.Results, 8)
 
-	results[0] = &tb.ArticleResult{
+	results[0] = &tele.ArticleResult{
 		Title:       "🌌 I need some space!",
 		Description: "Add extra spaces between each character in the message.",
-		Text:        addSpaces(q.Text),
+		Text:        addSpaces(text),
 	}
 
-	results[1] = &tb.ArticleResult{
+	results[1] = &tele.ArticleResult{
 		Title:       "🦘 Jumpy Letters",
 		Description: "Randomly change letter case in the message.",
-		Text:        randomizeCase(q.Text),
+		Text:        randomizeCase(text),
 	}
 
-	results[2] = &tb.ArticleResult{
+	results[2] = &tele.ArticleResult{
 		Title:       "✏️ feat: add typo",
 		Description: "Randomly change the order of characters in the message.",
-		Text:        createTypos(q.Text, 1),
+		Text:        createTypos(text, 1),
 	}
 
-	results[3] = &tb.ArticleResult{
+	results[3] = &tele.ArticleResult{
 		Title:       "✍️ Scramble Letters",
 		Description: "Recursively add typos.",
-		Text:        createTypos(q.Text, 10+rand.Intn(10)),
+		Text:        createTypos(text, 10+rand.Intn(10)),
 	}
 
-	results[4] = &tb.ArticleResult{
+	results[4] = &tele.ArticleResult{
 		Title:       "🤳 What the hell am I doing?",
 		Description: "Tell everyone what you're doing (/me).",
-		Text:        generateMe(q.From, q.Text),
+		Text:        generateMe(sender, text),
 	}
 
-	results[5] = &tb.ArticleResult{
+	results[5] = &tele.ArticleResult{
 		Title:       "🔂 Can you repeat what I just said?",
 		Description: "Repeat the message three times.",
-		Text:        repeat(q.Text),
+		Text:        repeat(text),
 	}
 
-	results[6] = &tb.ArticleResult{
+	results[6] = &tele.ArticleResult{
 		Title:       "🛠️ Combo: Spaces + Repeat",
 		Description: "Add extra spaces between each character. Then repeat the message three times.",
-		Text:        repeat(addSpaces(q.Text)),
+		Text:        repeat(addSpaces(text)),
 	}
 
-	results[7] = &tb.ArticleResult{
+	results[7] = &tele.ArticleResult{
 		Title:       "🛠️ Combo: Random Case + Spaces",
 		Description: "Randomly change letter case. Then add extra spaces between each character.",
-		Text:        addSpaces(randomizeCase(q.Text)),
+		Text:        addSpaces(randomizeCase(text)),
 	}
 
 	results[0].SetResultID("addSpaces")
@@ -71,14 +72,10 @@ func HandleInlineQuery(b *tb.Bot, q *tb.Query) {
 	results[6].SetResultID("comboSpacesRepeat")
 	results[7].SetResultID("comboRandomcaseSpaces")
 
-	err := b.Answer(q, &tb.QueryResponse{
+	return c.Answer(&tele.QueryResponse{
 		Results:   results,
 		CacheTime: 1,
 	})
-
-	if err != nil {
-		log.Println(err)
-	}
 }
 
 // addSpaces adds one space between ASCII characters, two spaces between non-ASCII characters.
@@ -128,7 +125,7 @@ func createTypos(s string, rounds int) string {
 }
 
 // generateMe generates a '/me' message.
-func generateMe(from tb.User, s string) string {
+func generateMe(from *tele.User, s string) string {
 	if s == "" {
 		s = "doesn't know what to say. 🤐"
 	}

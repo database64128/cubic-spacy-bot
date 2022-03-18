@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	tb "gopkg.in/tucnak/telebot.v2"
+	tele "gopkg.in/telebot.v3"
 )
 
 func main() {
@@ -26,13 +27,15 @@ func main() {
 	}
 
 	if botToken == "" {
-		log.Fatal("Please provide a bot token with command line option '-token' or environment variable 'TELEGRAM_BOT_TOKEN'.")
+		fmt.Println("Please provide a bot token with command line option '-token' or environment variable 'TELEGRAM_BOT_TOKEN'.")
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	b, err := tb.NewBot(tb.Settings{
+	b, err := tele.NewBot(tele.Settings{
 		URL:    botUrl,
 		Token:  botToken,
-		Poller: &tb.LongPoller{},
+		Poller: &tele.LongPoller{},
 	})
 
 	if err != nil {
@@ -41,17 +44,14 @@ func main() {
 
 	log.Printf("Started Telegram bot: @%s (%d)", b.Me.Username, b.Me.ID)
 
-	b.Handle(tb.OnQuery, func(q *tb.Query) {
-		HandleInlineQuery(b, q)
-	})
+	b.Handle(tele.OnQuery, HandleInlineQuery)
 
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigs
-		log.Printf("Received %s, shutting down...", sig.String())
+		log.Printf("Received %s, stopping...", sig.String())
 		b.Stop()
-		os.Exit(0)
 	}()
 
 	b.Start()
