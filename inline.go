@@ -11,7 +11,7 @@ import (
 
 // HandleInlineQuery handles an inline query.
 func HandleInlineQuery(c tele.Context) error {
-	text := c.Text()
+	text := c.Data()
 	sender := c.Sender()
 	results := make(tele.Results, 8)
 
