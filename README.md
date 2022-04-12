@@ -2,6 +2,7 @@
 
 [![Build](https://github.com/database64128/cubic-spacy-bot/actions/workflows/build.yml/badge.svg)](https://github.com/database64128/cubic-spacy-bot/actions/workflows/build.yml)
 [![Release](https://github.com/database64128/cubic-spacy-bot/actions/workflows/release.yml/badge.svg)](https://github.com/database64128/cubic-spacy-bot/actions/workflows/release.yml)
+[![AUR version](https://img.shields.io/aur/version/cubic-spacy-bot-git?label=cubic-spacy-bot-git)](https://aur.archlinux.org/packages/cubic-spacy-bot-git)
 
 An inline Telegram bot that gives you plenty of space!
 

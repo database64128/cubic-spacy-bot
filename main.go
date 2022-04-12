@@ -46,10 +46,10 @@ func main() {
 
 	b.Handle(tele.OnQuery, HandleInlineQuery)
 
-	sigs := make(chan os.Signal)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		sig := <-sigs
+		sig := <-sigCh
 		log.Printf("Received %s, stopping...", sig.String())
 		b.Stop()
 	}()
