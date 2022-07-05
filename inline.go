@@ -13,7 +13,7 @@ import (
 func HandleInlineQuery(c tele.Context) error {
 	text := c.Data()
 	sender := c.Sender()
-	results := make(tele.Results, 8)
+	results := make(tele.Results, 10)
 
 	results[0] = &tele.ArticleResult{
 		Title:       "🌌 I need some space!",
@@ -52,12 +52,24 @@ func HandleInlineQuery(c tele.Context) error {
 	}
 
 	results[6] = &tele.ArticleResult{
+		Title:       "🔀 上海自来水",
+		Description: "Reverse the order of characters in the message.",
+		Text:        reverse(text),
+	}
+
+	results[7] = &tele.ArticleResult{
+		Title:       "🪞 上海自来水来自海上",
+		Description: "Mirror the message in reverse order.",
+		Text:        mirror(text),
+	}
+
+	results[8] = &tele.ArticleResult{
 		Title:       "🛠️ Combo: Spaces + Repeat",
 		Description: "Add extra spaces between each character. Then repeat the message three times.",
 		Text:        repeat(addSpaces(text)),
 	}
 
-	results[7] = &tele.ArticleResult{
+	results[9] = &tele.ArticleResult{
 		Title:       "🛠️ Combo: Random Case + Spaces",
 		Description: "Randomly change letter case. Then add extra spaces between each character.",
 		Text:        addSpaces(randomizeCase(text)),
@@ -69,8 +81,10 @@ func HandleInlineQuery(c tele.Context) error {
 	results[3].SetResultID("scrambleLetters")
 	results[4].SetResultID("generateMe")
 	results[5].SetResultID("repeat")
-	results[6].SetResultID("comboSpacesRepeat")
-	results[7].SetResultID("comboRandomcaseSpaces")
+	results[6].SetResultID("reverse")
+	results[7].SetResultID("mirror")
+	results[8].SetResultID("comboSpacesRepeat")
+	results[9].SetResultID("comboRandomcaseSpaces")
 
 	return c.Answer(&tele.QueryResponse{
 		Results:   results,
@@ -168,6 +182,38 @@ func randomizeCase(s string) string {
 				runes[i] += 'a' - 'A'
 			}
 		}
+	}
+
+	return string(runes)
+}
+
+// reverse reverses the order of runes in s.
+func reverse(s string) string {
+	if s == "" {
+		s = "上海自来水"
+	}
+
+	runes := []rune(s)
+
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+
+	return string(runes)
+}
+
+// mirror mirrors the message in reverse order.
+func mirror(s string) string {
+	if s == "" {
+		s = "上海自来水"
+	}
+
+	originalRunes := []rune(s)
+	runes := make([]rune, len(originalRunes)*2-1)
+	copy(runes, originalRunes)
+
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[j] = runes[i]
 	}
 
 	return string(runes)
