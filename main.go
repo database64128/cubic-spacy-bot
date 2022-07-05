@@ -11,33 +11,30 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+var (
+	botToken           = flag.String("token", os.Getenv("TELEGRAM_BOT_TOKEN"), "Telegram bot API token")
+	botUrl             = flag.String("url", os.Getenv("TELEGRAM_BOT_URL"), "[Optional] Custom Telegram bot API URL")
+	suppressTimestamps = flag.Bool("suppressTimestamps", false, "Specify this flag to omit timestamps in logs")
+)
+
 func main() {
-	var botToken string
-	var botUrl string
-	var suppressTimestamps bool
-
-	flag.StringVar(&botToken, "token", os.Getenv("TELEGRAM_BOT_TOKEN"), "Telegram bot API token")
-	flag.StringVar(&botUrl, "url", os.Getenv("TELEGRAM_BOT_URL"), "[Optional] Custom Telegram bot API URL")
-	flag.BoolVar(&suppressTimestamps, "suppressTimestamps", false, "Specify this flag to omit timestamps in logs")
-
 	flag.Parse()
 
-	if suppressTimestamps {
+	if *suppressTimestamps {
 		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
 	}
 
-	if botToken == "" {
+	if *botToken == "" {
 		fmt.Println("Please provide a bot token with command line option '-token' or environment variable 'TELEGRAM_BOT_TOKEN'.")
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	b, err := tele.NewBot(tele.Settings{
-		URL:    botUrl,
-		Token:  botToken,
+		URL:    *botUrl,
+		Token:  *botToken,
 		Poller: &tele.LongPoller{},
 	})
-
 	if err != nil {
 		log.Fatal(err)
 	}
