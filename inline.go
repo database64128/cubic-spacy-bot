@@ -164,24 +164,26 @@ func randomizeCase(s string) string {
 
 	runes := []rune(s)
 
-	for i := range runes {
-		isLower := 'a' <= runes[i] && runes[i] <= 'z'
-		isUpper := 'A' <= runes[i] && runes[i] <= 'Z'
+	var (
+		ri        int64
+		remaining int
+	)
 
-		if !isLower && !isUpper {
+	for i, r := range runes {
+		if uint32(r|0x20-'a') > 'z'-'a' {
 			continue
 		}
 
-		switch rand.Intn(2) {
-		case 0: // ToUpper
-			if isLower {
-				runes[i] -= 'a' - 'A'
-			}
-		case 1: // ToLower
-			if isUpper {
-				runes[i] += 'a' - 'A'
-			}
+		if remaining == 0 {
+			ri, remaining = rand.Int63(), 63
 		}
+
+		if ri&1 == 1 {
+			runes[i] = r ^ 0x20
+		}
+
+		ri >>= 1
+		remaining--
 	}
 
 	return string(runes)
