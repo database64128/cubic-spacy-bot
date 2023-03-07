@@ -2,4 +2,4 @@ module github.com/database64128/cubic-spacy-bot
 
 go 1.20
 
-require gopkg.in/telebot.v3 v3.1.2
+require gopkg.in/telebot.v3 v3.1.3
