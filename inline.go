@@ -13,78 +13,88 @@ import (
 func HandleInlineQuery(c tele.Context) error {
 	text := c.Data()
 	sender := c.Sender()
-	results := make(tele.Results, 10)
-
-	results[0] = &tele.ArticleResult{
-		Title:       "🌌 I need some space!",
-		Description: "Add extra spaces between each character in the message.",
-		Text:        addSpaces(text),
+	results := tele.Results{
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "addSpaces",
+			},
+			Title:       "🌌 I need some space!",
+			Text:        addSpaces(text),
+			Description: "Add extra spaces between each character in the message.",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "randomizeCase",
+			},
+			Title:       "🦘 Jumpy Letters",
+			Text:        randomizeCase(text),
+			Description: "Randomly change letter case in the message.",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "createTypos",
+			},
+			Title:       "✏️ feat: add typo",
+			Text:        createTypos(text, 1),
+			Description: "Randomly change the order of characters in the message.",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "scrambleLetters",
+			},
+			Title:       "✍️ Scramble Letters",
+			Text:        createTypos(text, 10+rand.Intn(10)),
+			Description: "Recursively add typos.",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "generateMe",
+			},
+			Title:       "🤳 What the hell am I doing?",
+			Text:        generateMe(sender, text),
+			Description: "Tell everyone what you're doing (/me).",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "repeat",
+			},
+			Title:       "🔂 Can you repeat what I just said?",
+			Text:        repeat(text),
+			Description: "Repeat the message three times.",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "reverse",
+			},
+			Title:       "🔀 上海自来水",
+			Text:        reverse(text),
+			Description: "Reverse the order of characters in the message.",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "mirror",
+			},
+			Title:       "🪞 上海自来水来自海上",
+			Text:        mirror(text),
+			Description: "Mirror the message in reverse order.",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "comboSpacesRepeat",
+			},
+			Title:       "🛠️ Combo: Spaces + Repeat",
+			Text:        repeat(addSpaces(text)),
+			Description: "Add extra spaces between each character. Then repeat the message three times.",
+		},
+		&tele.ArticleResult{
+			ResultBase: tele.ResultBase{
+				ID: "comboRandomcaseSpaces",
+			},
+			Title:       "🛠️ Combo: Random Case + Spaces",
+			Text:        addSpaces(randomizeCase(text)),
+			Description: "Randomly change letter case. Then add extra spaces between each character.",
+		},
 	}
-
-	results[1] = &tele.ArticleResult{
-		Title:       "🦘 Jumpy Letters",
-		Description: "Randomly change letter case in the message.",
-		Text:        randomizeCase(text),
-	}
-
-	results[2] = &tele.ArticleResult{
-		Title:       "✏️ feat: add typo",
-		Description: "Randomly change the order of characters in the message.",
-		Text:        createTypos(text, 1),
-	}
-
-	results[3] = &tele.ArticleResult{
-		Title:       "✍️ Scramble Letters",
-		Description: "Recursively add typos.",
-		Text:        createTypos(text, 10+rand.Intn(10)),
-	}
-
-	results[4] = &tele.ArticleResult{
-		Title:       "🤳 What the hell am I doing?",
-		Description: "Tell everyone what you're doing (/me).",
-		Text:        generateMe(sender, text),
-	}
-
-	results[5] = &tele.ArticleResult{
-		Title:       "🔂 Can you repeat what I just said?",
-		Description: "Repeat the message three times.",
-		Text:        repeat(text),
-	}
-
-	results[6] = &tele.ArticleResult{
-		Title:       "🔀 上海自来水",
-		Description: "Reverse the order of characters in the message.",
-		Text:        reverse(text),
-	}
-
-	results[7] = &tele.ArticleResult{
-		Title:       "🪞 上海自来水来自海上",
-		Description: "Mirror the message in reverse order.",
-		Text:        mirror(text),
-	}
-
-	results[8] = &tele.ArticleResult{
-		Title:       "🛠️ Combo: Spaces + Repeat",
-		Description: "Add extra spaces between each character. Then repeat the message three times.",
-		Text:        repeat(addSpaces(text)),
-	}
-
-	results[9] = &tele.ArticleResult{
-		Title:       "🛠️ Combo: Random Case + Spaces",
-		Description: "Randomly change letter case. Then add extra spaces between each character.",
-		Text:        addSpaces(randomizeCase(text)),
-	}
-
-	results[0].SetResultID("addSpaces")
-	results[1].SetResultID("randomizeCase")
-	results[2].SetResultID("createTypos")
-	results[3].SetResultID("scrambleLetters")
-	results[4].SetResultID("generateMe")
-	results[5].SetResultID("repeat")
-	results[6].SetResultID("reverse")
-	results[7].SetResultID("mirror")
-	results[8].SetResultID("comboSpacesRepeat")
-	results[9].SetResultID("comboRandomcaseSpaces")
 
 	return c.Answer(&tele.QueryResponse{
 		Results:   results,
