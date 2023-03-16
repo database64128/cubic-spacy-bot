@@ -11,7 +11,7 @@ An inline Telegram bot that gives you plenty of space!
 ```console
 $ git clone https://github.com/database64128/cubic-spacy-bot.git
 $ cd cubic-spacy-bot/
-$ go build -trimpath -ldflags '-s -w -buildid='
+$ go build -trimpath -ldflags '-s -w'
 $ sudo ln -rs cubic-spacy-bot /usr/bin/
 $ sudo ln -rs systemd/cubic-spacy-bot.service /usr/lib/systemd/system/
 $ sudo systemctl edit cubic-spacy-bot.service
