@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,16 +32,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx := context.Background()
+	logger := slog.Default()
+
 	b, err := tele.NewBot(tele.Settings{
 		URL:    *botUrl,
 		Token:  *botToken,
 		Poller: &tele.LongPoller{},
 	})
 	if err != nil {
-		log.Fatal(err)
+		logger.LogAttrs(ctx, slog.LevelError, "Failed to create Telegram bot",
+			slog.String("token", *botToken),
+			slog.String("url", *botUrl),
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 
-	log.Printf("Started Telegram bot: @%s (%d)", b.Me.Username, b.Me.ID)
+	logger.LogAttrs(ctx, slog.LevelInfo, "Started Telegram bot",
+		slog.String("username", b.Me.Username),
+		slog.Int64("id", b.Me.ID),
+	)
 
 	b.Handle(tele.OnQuery, HandleInlineQuery)
 
@@ -47,7 +60,7 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigCh
-		log.Printf("Received %s, stopping...", sig.String())
+		logger.LogAttrs(ctx, slog.LevelInfo, "Received exit signal", slog.Any("signal", sig))
 		b.Stop()
 	}()
 
