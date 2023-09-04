@@ -26,7 +26,7 @@ jobs:
       - name: Disable Git's stupid security theater
         run: git config --global safe.directory '*'
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build
         run: go build -v -trimpath -ldflags '-s -w'
