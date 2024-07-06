@@ -1,10 +1,10 @@
 [Unit]
-Description=Cubic Spacy bot service
+Description=Cubic Spacy Bot
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/cubic-spacy-bot -suppressTimestamps
+ExecStart=/usr/bin/cubic-spacy-bot -logNoTime
 
 [Install]
-WantedBy=multi-user.target default.target
+WantedBy=multi-user.target
