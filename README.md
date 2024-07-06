@@ -25,8 +25,6 @@ Add the following when editing the service:
 Environment=TELEGRAM_BOT_TOKEN=1234567:4TT8bAc8GHUspu3ERYn-KGcvsvGB9u_n4ddy
 ```
 
-The service unit file can also be used as a user unit.
-
 ## License
 
 [AGPLv3](LICENSE)
