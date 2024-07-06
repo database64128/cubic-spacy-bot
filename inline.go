@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 	"unicode"
 
@@ -53,7 +53,7 @@ func NewHandleInlineQueryFunc(ctx context.Context, logger *slog.Logger) tele.Han
 					ID: "scrambleLetters",
 				},
 				Title:       "✍️ Scramble Letters",
-				Text:        createTypos(text, 10+rand.Intn(10)),
+				Text:        createTypos(text, 10+rand.IntN(10)),
 				Description: "Recursively add typos.",
 			},
 			&tele.ArticleResult{
@@ -152,7 +152,7 @@ func createTypos(s string, rounds int) string {
 
 	for range times {
 		// Swap runes[pos] and runes[pos+1]
-		pos := rand.Intn(len(runes) - 1)
+		pos := rand.IntN(len(runes) - 1)
 		runes[pos], runes[pos+1] = runes[pos+1], runes[pos]
 	}
 
@@ -186,7 +186,7 @@ func randomizeCase(s string) string {
 	runes := []rune(s)
 
 	var (
-		ri        int64
+		ri        uint64
 		remaining int
 	)
 
@@ -196,7 +196,7 @@ func randomizeCase(s string) string {
 		}
 
 		if remaining == 0 {
-			ri, remaining = rand.Int63(), 63
+			ri, remaining = rand.Uint64(), 64
 		}
 
 		if ri&1 == 1 {
