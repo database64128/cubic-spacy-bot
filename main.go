@@ -96,6 +96,7 @@ func main() {
 	go func() {
 		sig := <-sigCh
 		logger.LogAttrs(ctx, slog.LevelInfo, "Received exit signal", slog.Any("signal", sig))
+		signal.Stop(sigCh)
 		b.Stop()
 	}()
 
