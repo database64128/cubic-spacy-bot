@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strconv"
 	"syscall"
 	"time"
@@ -20,6 +21,7 @@ import (
 )
 
 var (
+	version    bool
 	logNoColor bool
 	logNoTime  bool
 	logLevel   slog.Level
@@ -35,6 +37,7 @@ var (
 )
 
 func init() {
+	flag.BoolVar(&version, "version", false, "Print version and exit")
 	flag.BoolVar(&logNoColor, "logNoColor", false, "Disable colors in log output")
 	flag.BoolVar(&logNoTime, "logNoTime", false, "Disable timestamps in log output")
 	flag.TextVar(&logLevel, "logLevel", slog.LevelInfo, "Log level")
@@ -51,6 +54,13 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	if version {
+		if info, ok := debug.ReadBuildInfo(); ok {
+			os.Stdout.WriteString(info.String())
+		}
+		return
+	}
 
 	if botToken == "" {
 		fmt.Fprintln(os.Stderr, "Please provide a bot token with command line option '-token' or environment variable 'TELEGRAM_BOT_TOKEN'.")
