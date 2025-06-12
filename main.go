@@ -10,8 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 	"github.com/lmittmann/tint"
-	tele "gopkg.in/telebot.v3"
 )
 
 var (
@@ -57,26 +58,41 @@ func main() {
 
 	ctx := context.Background()
 
-	var (
-		b   *tele.Bot
-		err error
+	opts := make([]bot.Option, 0, 4)
+
+	if botURL != "" {
+		opts = append(opts, bot.WithServerURL(botURL))
+	}
+
+	opts = append(opts,
+		bot.WithSkipGetMe(),
+		bot.WithDefaultHandler(NewInlineQueryHandler(logger)),
+		bot.WithErrorsHandler(func(err error) {
+			logger.LogAttrs(ctx, slog.LevelWarn, "Failed to handle update",
+				tint.Err(err),
+			)
+		}),
 	)
 
+	b, err := bot.New(botToken, opts...)
+	if err != nil {
+		logger.LogAttrs(ctx, slog.LevelError, "Failed to create Telegram bot",
+			slog.String("token", botToken),
+			slog.String("url", botURL),
+			tint.Err(err),
+		)
+		os.Exit(1)
+	}
+
+	var me *models.User
+
 	for {
-		b, err = tele.NewBot(tele.Settings{
-			URL:   botURL,
-			Token: botToken,
-			OnError: func(err error, _ tele.Context) {
-				logger.LogAttrs(ctx, slog.LevelWarn, "Failed to handle update",
-					slog.Any("error", err),
-				)
-			},
-		})
+		me, err = b.GetMe(ctx)
 		if err != nil {
-			logger.LogAttrs(ctx, slog.LevelError, "Failed to create Telegram bot, retrying in 30 seconds",
+			logger.LogAttrs(ctx, slog.LevelError, "Failed to get bot info, retrying in 30 seconds",
 				slog.String("token", botToken),
 				slog.String("url", botURL),
-				slog.Any("error", err),
+				tint.Err(err),
 			)
 			time.Sleep(30 * time.Second)
 			continue
@@ -85,20 +101,16 @@ func main() {
 	}
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "Started Telegram bot",
-		slog.String("username", b.Me.Username),
-		slog.Int64("id", b.Me.ID),
+		slog.String("username", me.Username),
+		slog.Int64("id", me.ID),
 	)
 
-	b.Handle(tele.OnQuery, NewHandleInlineQueryFunc(ctx, logger))
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		sig := <-sigCh
-		logger.LogAttrs(ctx, slog.LevelInfo, "Received exit signal", slog.Any("signal", sig))
-		signal.Stop(sigCh)
-		b.Stop()
+		<-ctx.Done()
+		logger.LogAttrs(ctx, slog.LevelInfo, "Received exit signal")
+		stop()
 	}()
 
-	b.Start()
+	b.Start(ctx)
 }

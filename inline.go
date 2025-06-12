@@ -9,14 +9,19 @@ import (
 	"strings"
 	"unicode"
 
-	tele "gopkg.in/telebot.v3"
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
-// NewHandleInlineQueryFunc returns a [tele.HandlerFunc] that handles inline queries.
-func NewHandleInlineQueryFunc(ctx context.Context, logger *slog.Logger) tele.HandlerFunc {
-	return func(c tele.Context) error {
-		sender := c.Sender()
-		text := c.Data()
+// NewInlineQueryHandler returns a handler for inline queries.
+func NewInlineQueryHandler(logger *slog.Logger) bot.HandlerFunc {
+	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
+		inlineQuery := update.InlineQuery
+		if inlineQuery == nil {
+			return
+		}
+		sender := inlineQuery.From
+		text := inlineQuery.Query
 		logger.LogAttrs(ctx, slog.LevelDebug, "Received inline query",
 			slog.Int64("userID", sender.ID),
 			slog.String("userFirstName", sender.FirstName),
@@ -24,92 +29,98 @@ func NewHandleInlineQueryFunc(ctx context.Context, logger *slog.Logger) tele.Han
 			slog.String("text", text),
 		)
 
-		results := tele.Results{
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "addSpaces",
+		articles := []models.InlineQueryResultArticle{
+			{
+				ID:    "addSpaces",
+				Title: "🌌 I need some space!",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: addSpaces(text),
 				},
-				Title:       "🌌 I need some space!",
-				Text:        addSpaces(text),
 				Description: "Add extra spaces between each character in the message.",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "randomizeCase",
+			{
+				ID:    "randomizeCase",
+				Title: "🦘 Jumpy Letters",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: randomizeCase(text),
 				},
-				Title:       "🦘 Jumpy Letters",
-				Text:        randomizeCase(text),
 				Description: "Randomly change letter case in the message.",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "createTypos",
+			{
+				ID:    "createTypos",
+				Title: "✏️ feat: add typo",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: createTypos(text, 1),
 				},
-				Title:       "✏️ feat: add typo",
-				Text:        createTypos(text, 1),
 				Description: "Randomly change the order of characters in the message.",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "scrambleLetters",
+			{
+				ID:    "scrambleLetters",
+				Title: "✍️ Scramble Letters",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: createTypos(text, 10+rand.IntN(10)),
 				},
-				Title:       "✍️ Scramble Letters",
-				Text:        createTypos(text, 10+rand.IntN(10)),
 				Description: "Recursively add typos.",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "generateMe",
+			{
+				ID:    "generateMe",
+				Title: "🤳 What the hell am I doing?",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: generateMe(sender, text),
 				},
-				Title:       "🤳 What the hell am I doing?",
-				Text:        generateMe(sender, text),
 				Description: "Tell everyone what you're doing (/me).",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "repeat",
+			{
+				ID:    "repeat",
+				Title: "🔂 Can you repeat what I just said?",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: repeat(text),
 				},
-				Title:       "🔂 Can you repeat what I just said?",
-				Text:        repeat(text),
 				Description: "Repeat the message three times.",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "reverse",
+			{
+				ID:    "reverse",
+				Title: "🔀 上海自来水",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: reverse(text),
 				},
-				Title:       "🔀 上海自来水",
-				Text:        reverse(text),
 				Description: "Reverse the order of characters in the message.",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "mirror",
+			{
+				ID:    "mirror",
+				Title: "🪞 上海自来水来自海上",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: mirror(text),
 				},
-				Title:       "🪞 上海自来水来自海上",
-				Text:        mirror(text),
 				Description: "Mirror the message in reverse order.",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "comboSpacesRepeat",
+			{
+				ID:    "comboSpacesRepeat",
+				Title: "🛠️ Combo: Spaces + Repeat",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: repeat(addSpaces(text)),
 				},
-				Title:       "🛠️ Combo: Spaces + Repeat",
-				Text:        repeat(addSpaces(text)),
 				Description: "Add extra spaces between each character. Then repeat the message three times.",
 			},
-			&tele.ArticleResult{
-				ResultBase: tele.ResultBase{
-					ID: "comboRandomcaseSpaces",
+			{
+				ID:    "comboRandomcaseSpaces",
+				Title: "🛠️ Combo: Random Case + Spaces",
+				InputMessageContent: models.InputTextMessageContent{
+					MessageText: addSpaces(randomizeCase(text)),
 				},
-				Title:       "🛠️ Combo: Random Case + Spaces",
-				Text:        addSpaces(randomizeCase(text)),
 				Description: "Randomly change letter case. Then add extra spaces between each character.",
 			},
 		}
 
-		return c.Answer(&tele.QueryResponse{
-			Results:   results,
-			CacheTime: 1,
+		results := make([]models.InlineQueryResult, len(articles))
+		for i, article := range articles {
+			results[i] = &article
+		}
+
+		b.AnswerInlineQuery(ctx, &bot.AnswerInlineQueryParams{
+			InlineQueryID: update.InlineQuery.ID,
+			Results:       results,
+			CacheTime:     1,
 		})
 	}
 }
@@ -161,7 +172,7 @@ func createTypos(s string, rounds int) string {
 }
 
 // generateMe generates a '/me' message.
-func generateMe(from *tele.User, s string) string {
+func generateMe(from *models.User, s string) string {
 	if s == "" {
 		s = "doesn't know what to say. 🤐"
 	}
