@@ -4,6 +4,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
+EnvironmentFile=/etc/cubic-spacy-bot/env
 ExecStart=/usr/bin/cubic-spacy-bot -logNoTime
 
 [Install]

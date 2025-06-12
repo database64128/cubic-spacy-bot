@@ -1,0 +1,11 @@
+[Unit]
+Description=Cubic Spacy Bot
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=%E/cubic-spacy-bot/env
+ExecStart=/usr/bin/cubic-spacy-bot -logNoTime
+
+[Install]
+WantedBy=default.target

@@ -4,9 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -21,6 +25,13 @@ var (
 	logLevel   slog.Level
 	botToken   string
 	botURL     string
+
+	botWebhookListenNetwork string
+	botWebhookListenAddress string
+	botWebhookListenMode    string
+
+	botWebhookSecretToken string
+	botWebhookURL         string
 )
 
 func init() {
@@ -29,6 +40,13 @@ func init() {
 	flag.TextVar(&logLevel, "logLevel", slog.LevelInfo, "Log level")
 	flag.StringVar(&botToken, "token", os.Getenv("TELEGRAM_BOT_TOKEN"), "Telegram bot API token")
 	flag.StringVar(&botURL, "url", os.Getenv("TELEGRAM_BOT_URL"), "[Optional] Custom Telegram bot API URL")
+
+	flag.StringVar(&botWebhookListenNetwork, "webhookListenNetwork", os.Getenv("TELEGRAM_BOT_WEBHOOK_LISTEN_NETWORK"), "Network for webhook listener (e.g., tcp, unix)")
+	flag.StringVar(&botWebhookListenAddress, "webhookListenAddress", os.Getenv("TELEGRAM_BOT_WEBHOOK_LISTEN_ADDRESS"), "Address for webhook listener (e.g., :8080, /run/cubic-spacy-bot.sock)")
+	flag.StringVar(&botWebhookListenMode, "webhookListenMode", os.Getenv("TELEGRAM_BOT_WEBHOOK_LISTEN_MODE"), "File mode for webhook unix domain socket (e.g., 0660)")
+
+	flag.StringVar(&botWebhookSecretToken, "webhookSecretToken", os.Getenv("TELEGRAM_BOT_WEBHOOK_SECRET_TOKEN"), "[Optional] Secret token for webhook authentication")
+	flag.StringVar(&botWebhookURL, "webhookURL", os.Getenv("TELEGRAM_BOT_WEBHOOK_URL"), "Webhook URL to set for the bot (e.g., https://example.com/cubic-spacy-bot)")
 }
 
 func main() {
@@ -58,7 +76,7 @@ func main() {
 
 	ctx := context.Background()
 
-	opts := make([]bot.Option, 0, 4)
+	opts := make([]bot.Option, 0, 6)
 
 	if botURL != "" {
 		opts = append(opts, bot.WithServerURL(botURL))
@@ -66,12 +84,14 @@ func main() {
 
 	opts = append(opts,
 		bot.WithSkipGetMe(),
+		bot.WithWebhookSecretToken(botWebhookSecretToken),
 		bot.WithDefaultHandler(NewInlineQueryHandler(logger)),
 		bot.WithErrorsHandler(func(err error) {
 			logger.LogAttrs(ctx, slog.LevelWarn, "Failed to handle update",
 				tint.Err(err),
 			)
 		}),
+		bot.WithAllowedUpdates(bot.AllowedUpdates{"inline_query"}),
 	)
 
 	b, err := bot.New(botToken, opts...)
@@ -100,6 +120,23 @@ func main() {
 		break
 	}
 
+	for {
+		if _, err = b.SetWebhook(ctx, &bot.SetWebhookParams{
+			URL:            botWebhookURL,
+			AllowedUpdates: []string{"inline_query"},
+			SecretToken:    botWebhookSecretToken,
+		}); err != nil {
+			logger.LogAttrs(ctx, slog.LevelError, "Failed to set webhook, retrying in 30 seconds",
+				slog.String("webhookURL", botWebhookURL),
+				slog.String("webhookSecretToken", botWebhookSecretToken),
+				tint.Err(err),
+			)
+			time.Sleep(30 * time.Second)
+			continue
+		}
+		break
+	}
+
 	logger.LogAttrs(ctx, slog.LevelInfo, "Started Telegram bot",
 		slog.String("username", me.Username),
 		slog.Int64("id", me.ID),
@@ -112,5 +149,61 @@ func main() {
 		stop()
 	}()
 
-	b.Start(ctx)
+	if botWebhookURL != "" {
+		runWebhookServer(ctx, logger, b)
+	} else {
+		b.Start(ctx)
+	}
+}
+
+func runWebhookServer(ctx context.Context, logger *slog.Logger, b *bot.Bot) {
+	var lc net.ListenConfig
+	ln, err := lc.Listen(ctx, botWebhookListenNetwork, botWebhookListenAddress)
+	if err != nil {
+		logger.LogAttrs(ctx, slog.LevelError, "Failed to start webhook listener",
+			slog.String("network", botWebhookListenNetwork),
+			slog.String("address", botWebhookListenAddress),
+			tint.Err(err),
+		)
+		os.Exit(1)
+	}
+	listenAddress := ln.Addr().String()
+
+	if botWebhookListenNetwork == "unix" && botWebhookListenMode != "" {
+		mode, err := strconv.ParseUint(botWebhookListenMode, 8, 32)
+		if err != nil {
+			logger.LogAttrs(ctx, slog.LevelError, "Invalid file mode for webhook socket",
+				slog.String("mode", botWebhookListenMode),
+				tint.Err(err),
+			)
+			os.Exit(1)
+		}
+
+		if err := os.Chmod(listenAddress, fs.FileMode(mode)); err != nil {
+			logger.LogAttrs(ctx, slog.LevelError, "Failed to set file mode for webhook socket",
+				slog.String("address", listenAddress),
+				slog.String("mode", botWebhookListenMode),
+				tint.Err(err),
+			)
+			os.Exit(1)
+		}
+	}
+
+	server := http.Server{
+		Addr:     listenAddress,
+		Handler:  b.WebhookHandler(),
+		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
+	}
+
+	go func() {
+		if err := server.Serve(ln); err != nil && err != http.ErrServerClosed {
+			logger.LogAttrs(ctx, slog.LevelError, "Failed to serve webhook", tint.Err(err))
+			os.Exit(1)
+		}
+	}()
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "Started webhook server", slog.String("listenAddress", listenAddress))
+
+	b.StartWebhook(ctx)
+	_ = server.Close()
 }
