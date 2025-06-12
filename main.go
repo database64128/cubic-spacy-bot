@@ -91,7 +91,7 @@ func main() {
 				tint.Err(err),
 			)
 		}),
-		bot.WithAllowedUpdates(bot.AllowedUpdates{"inline_query"}),
+		bot.WithAllowedUpdates(bot.AllowedUpdates{models.AllowedUpdateInlineQuery}),
 	)
 
 	b, err := bot.New(botToken, opts...)
@@ -123,7 +123,7 @@ func main() {
 	for {
 		if _, err = b.SetWebhook(ctx, &bot.SetWebhookParams{
 			URL:            botWebhookURL,
-			AllowedUpdates: []string{"inline_query"},
+			AllowedUpdates: []string{models.AllowedUpdateInlineQuery},
 			SecretToken:    botWebhookSecretToken,
 		}); err != nil {
 			logger.LogAttrs(ctx, slog.LevelError, "Failed to set webhook, retrying in 30 seconds",
