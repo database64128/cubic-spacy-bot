@@ -8,15 +8,15 @@ An inline Telegram bot that gives you plenty of space!
 
 ## Deployment
 
-```console
-$ git clone https://github.com/database64128/cubic-spacy-bot.git
-$ cd cubic-spacy-bot/
-$ go build -trimpath -ldflags '-s -w'
-$ sudo ln -rs cubic-spacy-bot /usr/bin/
-$ sudo ln -rs systemd/system/cubic-spacy-bot.service /usr/lib/systemd/system/
-$ sudo mkdir /etc/cubic-spacy-bot
-$ sudo nano /etc/cubic-spacy-bot/env
-$ sudo systemctl enable --now cubic-spacy-bot.service
+```bash
+git clone https://github.com/database64128/cubic-spacy-bot.git
+cd cubic-spacy-bot/
+go build -trimpath -ldflags '-s -w'
+sudo ln -rs cubic-spacy-bot /usr/bin/
+sudo ln -rs systemd/system/cubic-spacy-bot.service /usr/lib/systemd/system/
+sudo mkdir /etc/cubic-spacy-bot
+sudo nano /etc/cubic-spacy-bot/env
+sudo systemctl enable --now cubic-spacy-bot.service
 ```
 
 Add the following when editing `/etc/cubic-spacy-bot/env`:
@@ -30,7 +30,9 @@ To use webhooks, specify additional environment variables:
 ```bash
 TELEGRAM_BOT_WEBHOOK_LISTEN_NETWORK=unix
 TELEGRAM_BOT_WEBHOOK_LISTEN_ADDRESS=/run/cubic-spacy-bot.sock
-# TELEGRAM_BOT_WEBHOOK_LISTEN_MODE=0777
+# TELEGRAM_BOT_WEBHOOK_LISTEN_OWNER=http
+# TELEGRAM_BOT_WEBHOOK_LISTEN_GROUP=http
+# TELEGRAM_BOT_WEBHOOK_LISTEN_MODE=0660
 # TELEGRAM_BOT_WEBHOOK_SECRET_TOKEN=secret_token
 TELEGRAM_BOT_WEBHOOK_URL=https://example.com/cubic-spacy-bot
 ```

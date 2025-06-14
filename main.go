@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"os/user"
 	"runtime/debug"
 	"strconv"
 	"syscall"
@@ -30,6 +32,8 @@ var (
 
 	botWebhookListenNetwork string
 	botWebhookListenAddress string
+	botWebhookListenOwner   string
+	botWebhookListenGroup   string
 	botWebhookListenMode    string
 
 	botWebhookSecretToken string
@@ -46,6 +50,8 @@ func init() {
 
 	flag.StringVar(&botWebhookListenNetwork, "webhookListenNetwork", os.Getenv("TELEGRAM_BOT_WEBHOOK_LISTEN_NETWORK"), "Network for webhook listener (e.g., tcp, unix)")
 	flag.StringVar(&botWebhookListenAddress, "webhookListenAddress", os.Getenv("TELEGRAM_BOT_WEBHOOK_LISTEN_ADDRESS"), "Address for webhook listener (e.g., :8080, /run/cubic-spacy-bot.sock)")
+	flag.StringVar(&botWebhookListenOwner, "webhookListenOwner", os.Getenv("TELEGRAM_BOT_WEBHOOK_LISTEN_OWNER"), "Owner for webhook unix domain socket (e.g., http)")
+	flag.StringVar(&botWebhookListenGroup, "webhookListenGroup", os.Getenv("TELEGRAM_BOT_WEBHOOK_LISTEN_GROUP"), "Group for webhook unix domain socket (e.g., http)")
 	flag.StringVar(&botWebhookListenMode, "webhookListenMode", os.Getenv("TELEGRAM_BOT_WEBHOOK_LISTEN_MODE"), "File mode for webhook unix domain socket (e.g., 0660)")
 
 	flag.StringVar(&botWebhookSecretToken, "webhookSecretToken", os.Getenv("TELEGRAM_BOT_WEBHOOK_SECRET_TOKEN"), "[Optional] Secret token for webhook authentication")
@@ -179,23 +185,115 @@ func runWebhookServer(ctx context.Context, logger *slog.Logger, b *bot.Bot) {
 	}
 	listenAddress := ln.Addr().String()
 
-	if botWebhookListenNetwork == "unix" && botWebhookListenMode != "" {
-		mode, err := strconv.ParseUint(botWebhookListenMode, 8, 32)
-		if err != nil {
-			logger.LogAttrs(ctx, slog.LevelError, "Invalid file mode for webhook socket",
-				slog.String("mode", botWebhookListenMode),
-				tint.Err(err),
+	if botWebhookListenNetwork == "unix" {
+		if botWebhookListenOwner != "" || botWebhookListenGroup != "" {
+			uid, gid := -1, -1
+
+			if botWebhookListenOwner != "" {
+				var uidString string
+
+				owner, err := user.Lookup(botWebhookListenOwner)
+				if err != nil {
+					var e user.UnknownUserError
+					if errors.As(err, &e) {
+						uidString = botWebhookListenOwner
+					} else {
+						logger.LogAttrs(ctx, slog.LevelError, "Failed to lookup user for webhook socket owner",
+							slog.String("owner", botWebhookListenOwner),
+							tint.Err(err),
+						)
+						os.Exit(1)
+					}
+				} else {
+					uidString = owner.Uid
+				}
+
+				uid, err = strconv.Atoi(uidString)
+				if err != nil {
+					logger.LogAttrs(ctx, slog.LevelError, "Invalid username or uid for webhook socket owner",
+						slog.String("owner", botWebhookListenOwner),
+						slog.String("uid", uidString),
+						tint.Err(err),
+					)
+					os.Exit(1)
+				}
+			}
+
+			if botWebhookListenGroup != "" {
+				var gidString string
+
+				group, err := user.LookupGroup(botWebhookListenGroup)
+				if err != nil {
+					var e user.UnknownGroupError
+					if errors.As(err, &e) {
+						gidString = botWebhookListenGroup
+					} else {
+						logger.LogAttrs(ctx, slog.LevelError, "Failed to lookup group for webhook socket group",
+							slog.String("group", botWebhookListenGroup),
+							tint.Err(err),
+						)
+						os.Exit(1)
+					}
+				} else {
+					gidString = group.Gid
+				}
+
+				gid, err = strconv.Atoi(gidString)
+				if err != nil {
+					logger.LogAttrs(ctx, slog.LevelError, "Invalid group name or gid for webhook socket group",
+						slog.String("group", botWebhookListenGroup),
+						slog.String("gid", gidString),
+						tint.Err(err),
+					)
+					os.Exit(1)
+				}
+			}
+
+			if err := os.Chown(listenAddress, uid, gid); err != nil {
+				logger.LogAttrs(ctx, slog.LevelError, "Failed to set owner/group for webhook socket",
+					slog.String("address", listenAddress),
+					slog.String("owner", botWebhookListenOwner),
+					slog.String("group", botWebhookListenGroup),
+					slog.Int("uid", uid),
+					slog.Int("gid", gid),
+					tint.Err(err),
+				)
+				os.Exit(1)
+			}
+
+			logger.LogAttrs(ctx, slog.LevelDebug, "Set owner/group for webhook socket",
+				slog.String("address", listenAddress),
+				slog.String("owner", botWebhookListenOwner),
+				slog.String("group", botWebhookListenGroup),
+				slog.Int("uid", uid),
+				slog.Int("gid", gid),
 			)
-			os.Exit(1)
 		}
 
-		if err := os.Chmod(listenAddress, fs.FileMode(mode)); err != nil {
-			logger.LogAttrs(ctx, slog.LevelError, "Failed to set file mode for webhook socket",
+		if botWebhookListenMode != "" {
+			mode, err := strconv.ParseUint(botWebhookListenMode, 8, 32)
+			if err != nil {
+				logger.LogAttrs(ctx, slog.LevelError, "Invalid file mode for webhook socket",
+					slog.String("mode", botWebhookListenMode),
+					tint.Err(err),
+				)
+				os.Exit(1)
+			}
+			fileMode := fs.FileMode(mode)
+
+			if err := os.Chmod(listenAddress, fileMode); err != nil {
+				logger.LogAttrs(ctx, slog.LevelError, "Failed to set file mode for webhook socket",
+					slog.String("address", listenAddress),
+					slog.Any("mode", fileMode),
+					tint.Err(err),
+				)
+				os.Exit(1)
+			}
+
+			logger.LogAttrs(ctx, slog.LevelDebug, "Set file mode for webhook socket",
 				slog.String("address", listenAddress),
-				slog.String("mode", botWebhookListenMode),
-				tint.Err(err),
+				slog.Any("mode", fileMode),
 			)
-			os.Exit(1)
 		}
 	}
 
