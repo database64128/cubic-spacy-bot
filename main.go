@@ -125,7 +125,7 @@ func main() {
 	for {
 		me, err = b.GetMe(ctx)
 		if err != nil {
-			logger.LogAttrs(ctx, slog.LevelError, "Failed to get bot info, retrying in 30 seconds",
+			logger.LogAttrs(ctx, slog.LevelWarn, "Failed to get bot info, retrying in 30 seconds",
 				slog.String("token", botToken),
 				slog.String("url", botURL),
 				tint.Err(err),
@@ -142,7 +142,7 @@ func main() {
 			AllowedUpdates: []string{models.AllowedUpdateInlineQuery},
 			SecretToken:    botWebhookSecretToken,
 		}); err != nil {
-			logger.LogAttrs(ctx, slog.LevelError, "Failed to set webhook, retrying in 30 seconds",
+			logger.LogAttrs(ctx, slog.LevelWarn, "Failed to set webhook, retrying in 30 seconds",
 				slog.String("webhookURL", botWebhookURL),
 				slog.String("webhookSecretToken", botWebhookSecretToken),
 				tint.Err(err),

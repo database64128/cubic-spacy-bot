@@ -123,7 +123,7 @@ func NewInlineQueryHandler(logger *slog.Logger) bot.HandlerFunc {
 			Results:       results,
 			CacheTime:     1,
 		}); err != nil {
-			logger.LogAttrs(ctx, slog.LevelError, "Failed to answer inline query",
+			logger.LogAttrs(ctx, slog.LevelWarn, "Failed to answer inline query",
 				slog.Int64("userID", sender.ID),
 				slog.String("userFirstName", sender.FirstName),
 				slog.String("username", sender.Username),
