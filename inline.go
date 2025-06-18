@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/lmittmann/tint"
 )
 
 // NewInlineQueryHandler returns a handler for inline queries.
@@ -117,11 +118,19 @@ func NewInlineQueryHandler(logger *slog.Logger) bot.HandlerFunc {
 			results[i] = &article
 		}
 
-		b.AnswerInlineQuery(ctx, &bot.AnswerInlineQueryParams{
+		if _, err := b.AnswerInlineQuery(ctx, &bot.AnswerInlineQueryParams{
 			InlineQueryID: update.InlineQuery.ID,
 			Results:       results,
 			CacheTime:     1,
-		})
+		}); err != nil {
+			logger.LogAttrs(ctx, slog.LevelError, "Failed to answer inline query",
+				slog.Int64("userID", sender.ID),
+				slog.String("userFirstName", sender.FirstName),
+				slog.String("username", sender.Username),
+				slog.String("text", text),
+				tint.Err(err),
+			)
+		}
 	}
 }
 
