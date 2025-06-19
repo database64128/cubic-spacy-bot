@@ -125,6 +125,14 @@ func main() {
 	for {
 		me, err = b.GetMe(ctx)
 		if err != nil {
+			if isFatalAPIError(err) {
+				logger.LogAttrs(ctx, slog.LevelError, "Failed to get bot info",
+					slog.String("token", botToken),
+					slog.String("url", botURL),
+					tint.Err(err),
+				)
+				os.Exit(1)
+			}
 			logger.LogAttrs(ctx, slog.LevelWarn, "Failed to get bot info, retrying in 30 seconds",
 				slog.String("token", botToken),
 				slog.String("url", botURL),
@@ -142,6 +150,14 @@ func main() {
 			AllowedUpdates: []string{models.AllowedUpdateInlineQuery},
 			SecretToken:    botWebhookSecretToken,
 		}); err != nil {
+			if isFatalAPIError(err) {
+				logger.LogAttrs(ctx, slog.LevelError, "Failed to set webhook",
+					slog.String("webhookURL", botWebhookURL),
+					slog.String("webhookSecretToken", botWebhookSecretToken),
+					tint.Err(err),
+				)
+				os.Exit(1)
+			}
 			logger.LogAttrs(ctx, slog.LevelWarn, "Failed to set webhook, retrying in 30 seconds",
 				slog.String("webhookURL", botWebhookURL),
 				slog.String("webhookSecretToken", botWebhookSecretToken),
@@ -314,4 +330,26 @@ func runWebhookServer(ctx context.Context, logger *slog.Logger, b *bot.Bot) {
 
 	b.StartWebhook(ctx)
 	_ = server.Close()
+}
+
+// isFatalAPIError returns whether the error is a fatal Telegram bot API error.
+func isFatalAPIError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	for {
+		e := errors.Unwrap(err)
+		if e == nil {
+			break
+		}
+		err = e
+	}
+
+	switch err {
+	case bot.ErrorForbidden, bot.ErrorBadRequest, bot.ErrorUnauthorized, bot.ErrorNotFound, bot.ErrorConflict:
+		return true
+	default:
+		return false
+	}
 }
