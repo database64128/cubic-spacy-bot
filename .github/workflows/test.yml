@@ -1,0 +1,42 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+
+jobs:
+  test:
+    name: Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Build
+        run: go build -v -trimpath -ldflags '-s -w'
+
+      - name: Test
+        run: go test -v
+
+      - name: Upload Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: cubic-spacy-bot-${{ github.sha }}-${{ matrix.os }}-${{ runner.arch }}
+          path: cubic-spacy-bot*
