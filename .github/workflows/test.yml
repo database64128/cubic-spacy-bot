@@ -36,7 +36,7 @@ jobs:
         run: go test -v
 
       - name: Upload Binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cubic-spacy-bot-${{ github.sha }}-${{ matrix.os }}-${{ runner.arch }}
           path: cubic-spacy-bot*
