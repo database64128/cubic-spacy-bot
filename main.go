@@ -210,8 +210,7 @@ func runWebhookServer(ctx context.Context, logger *slog.Logger, b *bot.Bot) {
 
 				owner, err := user.Lookup(botWebhookListenOwner)
 				if err != nil {
-					var e user.UnknownUserError
-					if errors.As(err, &e) {
+					if _, ok := errors.AsType[user.UnknownUserError](err); ok {
 						uidString = botWebhookListenOwner
 					} else {
 						logger.LogAttrs(ctx, slog.LevelError, "Failed to lookup user for webhook socket owner",
@@ -240,8 +239,7 @@ func runWebhookServer(ctx context.Context, logger *slog.Logger, b *bot.Bot) {
 
 				group, err := user.LookupGroup(botWebhookListenGroup)
 				if err != nil {
-					var e user.UnknownGroupError
-					if errors.As(err, &e) {
+					if _, ok := errors.AsType[user.UnknownGroupError](err); ok {
 						gidString = botWebhookListenGroup
 					} else {
 						logger.LogAttrs(ctx, slog.LevelError, "Failed to lookup group for webhook socket group",
