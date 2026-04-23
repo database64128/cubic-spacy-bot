@@ -12,6 +12,9 @@ on:
       - 'README.md'
       - 'LICENSE'
 
+permissions:
+  contents: write
+
 jobs:
   test:
     name: Test
