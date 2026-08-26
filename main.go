@@ -84,7 +84,7 @@ func main() {
 		}
 	}
 
-	logger := slog.New(tint.NewHandler(os.Stderr, &tint.Options{
+	logger := slog.New(tint.NewTextHandler(os.Stderr, &tint.Options{
 		Level:       logLevel,
 		ReplaceAttr: replaceAttr,
 		NoColor:     logNoColor,
