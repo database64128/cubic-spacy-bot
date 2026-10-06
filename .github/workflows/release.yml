@@ -35,7 +35,7 @@ jobs:
                 package-windows-x86-64-v3 \
                 package-windows-arm64 \
                 package-macos-x86-64-v3 \
-                package-macos-arm64 \ 
+                package-macos-arm64
 
           env GOAMD64=v2 go build -v -trimpath -ldflags '-s -w' -o package-linux-glibc-x86-64-v2/
           env GOAMD64=v3 go build -v -trimpath -ldflags '-s -w' -o package-linux-glibc-x86-64-v3/
@@ -52,27 +52,30 @@ jobs:
         env:
           ZSTD_CLEVEL: 19
           ZSTD_NBTHREADS: 0
+          # Force root ownership and avoid a "./" entry, so extracting as root never
+          # rewrites the destination directory's (e.g. /root) uid/gid.
+          TAR_FLAGS: --owner=0 --group=0 --numeric-owner
         run: |
           cd package-linux-glibc-x86-64-v2/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-glibc-x86-64-v2.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-glibc-x86-64-v2.tar.zst .
           cd ../package-linux-glibc-x86-64-v3/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-glibc-x86-64-v3.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-glibc-x86-64-v3.tar.zst .
           cd ../package-linux-x86-64-v2/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-x86-64-v2.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-x86-64-v2.tar.zst .
           cd ../package-linux-x86-64-v3/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-x86-64-v3.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-x86-64-v3.tar.zst .
           cd ../package-linux-arm64/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-arm64.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-linux-arm64.tar.zst .
           cd ../package-windows-x86-64-v2/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-windows-x86-64-v2.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-windows-x86-64-v2.tar.zst .
           cd ../package-windows-x86-64-v3/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-windows-x86-64-v3.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-windows-x86-64-v3.tar.zst .
           cd ../package-windows-arm64/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-windows-arm64.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-windows-arm64.tar.zst .
           cd ../package-macos-x86-64-v3/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-macos-x86-64-v3.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-macos-x86-64-v3.tar.zst .
           cd ../package-macos-arm64/
-          tar -acf ../cubic-spacy-bot-${{ github.ref_name }}-macos-arm64.tar.zst .
+          tar $TAR_FLAGS -acf ../cubic-spacy-bot-${{ github.ref_name }}-macos-arm64.tar.zst .
 
       - name: Upload release assets
         uses: svenstaro/upload-release-action@v2

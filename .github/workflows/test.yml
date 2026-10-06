@@ -13,7 +13,7 @@ on:
       - 'LICENSE'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -36,7 +36,7 @@ jobs:
         run: go build -v -trimpath -ldflags '-s -w'
 
       - name: Test
-        run: go test -v
+        run: go test -v ./...
 
       - name: Upload Binaries
         uses: actions/upload-artifact@v7
