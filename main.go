@@ -120,7 +120,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var me *models.User
+	var me *models.BotFullInfo
 
 	for {
 		me, err = b.GetMe(ctx)
